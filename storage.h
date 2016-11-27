@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&); \
@@ -26,7 +27,11 @@ typedef struct StorageLatency_ {
 
 class Storage {
  public:
-  Storage() {}
+  Storage() 
+  {
+    memset(&stats_, 0, sizeof(StorageStats));
+    memset(&latency_, 0, sizeof(StorageLatency));
+  }
   ~Storage() {}
 
   // Sets & Gets
@@ -44,7 +49,7 @@ class Storage {
   // [out] hit: 0|1 for miss|hit
   // [out] cycle: total access cycle
   virtual void HandleRequest(uint64_t addr, int bytes, int read,
-                             char *content, int &hit, int &cycle) = 0;
+                             unsigned char *content, int &hit, int &cycle) = 0;
 
  protected:
   StorageStats stats_;
