@@ -25,7 +25,10 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
       store[i][j].flag = 0;
       store[i][j].recent = 0;
       store[i][j].frequency = 0;
+      store[i][j].begin_access = 0;
       store[i][j].dirty = false;
+      store[i][j].reused = false;
+      store[i][j].rd = PD;
       memset(store[i][j].c, 0, sizeof(store[i][j].c));
     }
 
@@ -243,6 +246,9 @@ void Cache::ReplaceUpdate(bool ishit, uint64_t addr, int target)
     return FIFO_update(ishit, addr, target);
   case RANDOM:
     return RANDOM_update(ishit, addr, target);
+  case PDP:
+    PDP_update(ishit, addr, target);
+    break;
   default:
     printf("error: replace algorithm have not implemented!\n");
     exit(1);
@@ -269,6 +275,9 @@ void Cache::ReplaceAlgorithm(uint64_t addr, int &cycle, int read)
     return ReplaceAlgorithm_FIFO(addr, cycle, read);
   case RANDOM:
     return ReplaceAlgorithm_RANDOM(addr, cycle, read);
+  case PDP:
+    ReplaceAlgorithm_PDP(addr, cycle, read);
+    break;
   default:
     printf("error: replace algorithm have not implemented!\n");
     exit(1);

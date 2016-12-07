@@ -43,12 +43,14 @@ void Cache::ReplaceAlgorithm_LFU(uint64_t addr, int &cycle, int read)
   if(voidblock == false)
   {
     stats_.replace_num++;
-    uint64_t minnum = TIMESTAMP_LIMIT;
+    float minnum = 2;
+    float tempfre = 2;
     for(int j = 0; j < config_.associativity; ++j)
     {
-      if(store[vpn][j].frequency < minnum)
+    	tempfre = store[vpn][j].frequency / (stats_.access_counter-store[vpn][j].begin_access);
+      if(tempfre < minnum)
       {
-        minnum = store[vpn][j].frequency;
+        minnum = tempfre;
         lfu = j;
       }
     }
@@ -71,6 +73,7 @@ void Cache::ReplaceAlgorithm_LFU(uint64_t addr, int &cycle, int read)
   // printf("setting cache line %d valid\n", lru);
   store[vpn][lfu].valid = true;
   store[vpn][lfu].frequency = 1;
+  store[vpn][lfu].begin_access = stats_.access_counter - 1;
   #ifdef DEBUG
   printf("cacle level %d, vpn %d, lfu %d, increase timestamp %lu\n", level, (int)vpn, lfu, timestamp);
   #endif
@@ -222,3 +225,125 @@ void Cache::ReplaceAlgorithm_RANDOM(uint64_t addr, int &cycle, int read)
 // if needed
 void Cache::RANDOM_update(bool ishit, uint64_t addr, int target)
 {}
+
+void Cache::ReplaceAlgorithm_PDP(uint64_t addr, int &cycle, int read)
+{
+	#ifdef DEBUG
+  printf("cache level %d, PDP replacement\n", level);
+  #endif
+
+  uint64_t vpn = (addr << (64-s-b)) >> (64-s);
+  uint64_t vpo = (addr << (64-b)) >> (64-b);
+  uint64_t flag = addr >> (s+b);
+  bool voidblock = false;
+  int lfu = 0;           
+  int temphit;
+
+  // cold start
+  for(int j = 0; j < config_.associativity; ++j)
+  {
+    if(store[vpn][j].valid == false)
+    {
+      
+      voidblock = true;
+      lfu = j;
+      //printf("Prime: %d\n", lru);
+      break;
+    }
+  }
+  #ifdef DEBUG
+  if(voidblock) printf("cold start, choose a empty cecheline: set %d, block %d\n", (int)vpn, lfu);
+  #endif
+  if(voidblock == false)
+  {
+  	for(int j = 0; j < config_.associativity; ++j)
+  	{
+  		if(store[vpn][j].rd == 0)
+  		{
+  			lfu = j;
+  			voidblock = true;
+  			break;
+  		}
+  	}
+  }
+  // no empty entry, find lfu
+  // tested
+  if(voidblock == false)
+  {
+    stats_.replace_num++;
+    
+    bool allReused = true;
+    bool firstInserted = true;
+    int maxRD = 0;
+    for(int j = 0; j < config_.associativity; ++j)
+    {
+    	if(store[vpn][j].reused == false)
+    	{
+    		if(firstInserted)
+    		{
+    			firstInserted = false;
+    			lfu = j;
+    		}
+    		allReused = false;
+    		if(store[vpn][j].rd > maxRD)
+    		{
+    			maxRD = store[vpn][j].rd;
+    			lfu = j;
+    		}
+    	}
+    }
+    maxRD = 0;
+    if(allReused)
+    {
+    	for(int j = 0; j < config_.associativity; ++j)
+    	{
+    		if(store[vpn][j].rd > maxRD)
+    		{
+    			maxRD = store[vpn][j].rd;
+    			lfu = j;	
+    		}	
+    	}	
+    }
+    #ifdef DEBUG
+    printf("evict cecheline: set %d, block %d\n", (int)vpn, lfu);
+    #endif
+
+    //if write back and the entry is dirty, update the lower cache
+    // tested
+    if(config_.write_through == WRITEBACK && store[vpn][lfu].dirty)
+    {
+      #ifdef DEBUG
+      printf("cache set %d, block %d, dirty write, write to next level of cache\n", (int)vpn, lfu);
+      #endif
+      //write back the sacrified page
+      lower_->HandleRequest((store[vpn][lfu].flag << (s+b))+(vpn << b), 1 << b, 0, store[vpn][lfu].c, temphit, cycle);
+    }
+  }
+  store[vpn][lfu].valid = true;
+  store[vpn][lfu].rd = PD;
+  store[vpn][lfu].reused = false;
+  for(int j = 0; j < config_.associativity; ++j)
+  {
+  	store[vpn][j].rd--;
+  }
+  #ifdef DEBUG
+  printf("cacle level %d, vpn %d, random %d, increase timestamp %lu\n", level, (int)vpn, lfu, timestamp);
+  #endif
+  store[vpn][lfu].flag = flag;
+  if(read == READ_) store[vpn][lfu].dirty = false;
+  else store[vpn][lfu].dirty = true;
+}
+void Cache::PDP_update(bool ishit, uint64_t addr, int target)
+{
+	int vpn = (addr << (64-s-b)) >> (64-s);
+	if(ishit)
+	{
+		if(store[vpn][target].reused == false)
+			store[vpn][target].reused == true;
+		store[vpn][target].rd = PD;
+		for(int j = 0; j < config_.associativity; ++j)
+		{
+			store[vpn][j].rd--;
+		}
+	}
+}

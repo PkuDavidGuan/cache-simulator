@@ -22,7 +22,10 @@ typedef struct Entry_
   unsigned char c[LINESIZE_LIMIT];
   uint64_t recent;
   uint64_t frequency;
+  int begin_access;
   bool dirty;
+  bool reused;
+  int rd;
 } Entry;
 
 class Cache: public Storage 
@@ -56,11 +59,13 @@ class Cache: public Storage
   void LFU_update(bool ishit, uint64_t addr, int target);
   void FIFO_update(bool ishit, uint64_t addr, int target);
   void RANDOM_update(bool ishit, uint64_t addr, int target);
+  void PDP_update(bool ishit, uint64_t addr, int target);
 
   void ReplaceAlgorithm_LRU(uint64_t addr, int &cycle, int read);
   void ReplaceAlgorithm_LFU(uint64_t addr, int &cycle, int read);
   void ReplaceAlgorithm_RANDOM(uint64_t addr, int &cycle, int read);
   void ReplaceAlgorithm_FIFO(uint64_t addr, int &cycle, int read);
+  void ReplaceAlgorithm_PDP(uint64_t addr, int &cycle, int read);
 
   // Prefetching
   int PrefetchDecision();

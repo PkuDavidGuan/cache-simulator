@@ -111,3 +111,6 @@ access cycle:     32220400
 
 21:27:
 There may be something wrong with the lfu....---OK
+
+12/07 00:05
+I try to modify the implentment of the LFU. --But the result is worse.....
