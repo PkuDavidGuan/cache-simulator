@@ -1,0 +1,36 @@
+-------------------------------------------------------------------------
+SAT 3RD DEC 2016
+
+15:00 
+started part 1
+
+NOTE:
+-- we use the access time column in the output of cacti
+-- CPU presumably 2GHZ -- 0.5ns per cycle
+-- My goal to construct the code: when doing part 2, only need to change ReplaceAlgorithm() function (to make this more compatable)
+
+initial configuration:
+        CAPACITY    ASSOCIATIVITY   HITLATENCY
+--  L1  2MB         4-way           2.99212ns -- 6cycles
+--  L2  16MB        4-way           7.14041ns -- 15cycles
+--  L3  128MB       4-way           20.0724ns -- 41cycles
+
+18:02
+Question: why consider write not allocate as a hit?
+
+18:21
+code reconstruction finished, need to do branch test
+
+20:27
+continue
+
+test: use the test.trace and the TEST macro definition
+tested:
+- hit& miss -- GOOD
+- write back -- GOOD
+- write allocate -- GOOD
+- lru -- GOOD
+- time calculation -- GOOD
+need to test:
+- write through
+- write not allocate

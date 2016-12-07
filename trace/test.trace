@@ -1,0 +1,9 @@
+w 0x0 # L1 miss, L2 read 0x0, miss, L3 read 0x0, miss, memory read 0x0, L1 write it
+w 0x4 # L1 miss, L2 read 0x4, miss, L3 read 0x4, hit, L1 write 0x4
+w 0x8 # L1 miss, evict set 0, block 0. 0x0 write to L2, hit, L2 read 0x8, miss, L3 read 0x8, hit
+w 0x8 # L1 hit, set dirty bit
+w 0x4 # L1 hit, set dirty bit
+w 0x0 # L1 miss, evict 0x8, because of dirty, 0x8 write to L2, hit, evict nothing, L2 read 0x0, hit
+r 0xc # L1 miss, evict 0x4, because of dirty, 0x4 write to L2, hit,  then L2 read 0xc, miss, evict nothing, L3 read 0xc, hit
+r 0x10 # L1 miss, evict 0x0, L2 write 0x0, hit, L2 read 0x10, miss, evict 0x8, L3 write 0x8, hit, L3 read 0x10, hit(because of large cache line)
+r 0x14 # L1 miss, evict without write, L2 read 0x14, miss, evict 0x4, L3 write 0x4, hit, L3 read 0x14, hit
