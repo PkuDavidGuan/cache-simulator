@@ -24,6 +24,7 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
       store[i][j].valid = false;
       store[i][j].flag = 0;
       store[i][j].recent = 0;
+      store[i][j].frequency = 0;
       store[i][j].dirty = false;
       memset(store[i][j].c, 0, sizeof(store[i][j].c));
     }
@@ -230,6 +231,8 @@ bool Cache::ReplaceDecision(uint64_t addr, int &target)
 
 void Cache::ReplaceUpdate(bool ishit, uint64_t addr, int target)
 {
+  if(ishit == false)
+    return;
   switch(ReplacePolicy)
   {
   case LRU:

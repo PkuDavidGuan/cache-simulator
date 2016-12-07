@@ -21,6 +21,7 @@ typedef struct Entry_
   uint64_t flag;
   unsigned char c[LINESIZE_LIMIT];
   uint64_t recent;
+  uint64_t frequency;
   bool dirty;
 } Entry;
 

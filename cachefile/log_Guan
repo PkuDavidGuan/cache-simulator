@@ -1,0 +1,113 @@
+12/06 20:27
+change the type of the L1 and L2 from Cache to Cache*.
+
+20:40
+Only use replace_update when it is hit, so I modified the replace_update.
+For LFU, I added frequency to the Entry_, so we should initilize the frequency in the Cache:init, just like recent, dirty and so on.
+LRU(1.trace):
+---------------------------------------------------------
+Total access cycle: 41523882
+
+level 1
+access counter:   612200
+hit numnber:      219193
+miss numnber:     393007
+access cycle:     3673200
+replace number:   393005
+fetch number:     393007
+prefetch number:  0
+
+level 2
+access counter:   526849
+hit numnber:      319733
+miss numnber:     207116
+access cycle:     9483282
+replace number:   207112
+fetch number:     207116
+prefetch number:  0
+
+memory
+access counter:   283674
+access cycle:     28367400
+
+LFU(1.trace):
+---------------------------------------------------------
+Total access cycle: 60073722
+
+level 1
+access counter:   612200
+hit numnber:      129807
+miss numnber:     482393
+access cycle:     3673200
+replace number:   482391
+fetch number:     482393
+prefetch number:  0
+
+level 2
+access counter:   616229
+hit numnber:      281067
+miss numnber:     335162
+access cycle:     11092122
+replace number:   335158
+fetch number:     335162
+prefetch number:  0
+
+memory
+access counter:   453084
+access cycle:     45308400
+
+
+FIFO(1.trace):
+---------------------------------------------------------
+Total access cycle: 45080466
+
+level 1
+access counter:   612200
+hit numnber:      223823
+miss numnber:     388377
+access cycle:     3673200
+replace number:   388375
+fetch number:     388377
+prefetch number:  0
+
+level 2
+access counter:   519287
+hit numnber:      291694
+miss numnber:     227593
+access cycle:     9347166
+replace number:   227589
+fetch number:     227593
+prefetch number:  0
+
+memory
+access counter:   320601
+access cycle:     32060100
+
+RANDOM(1.trace):
+---------------------------------------------------------
+Total access cycle: 45270682
+
+level 1
+access counter:   612200
+hit numnber:      222656
+miss numnber:     389544
+access cycle:     3673200
+replace number:   389542
+fetch number:     389544
+prefetch number:  0
+
+level 2
+access counter:   520949
+hit numnber:      291934
+miss numnber:     229015
+access cycle:     9377082
+replace number:   229011
+fetch number:     229015
+prefetch number:  0
+
+memory
+access counter:   322204
+access cycle:     32220400
+
+21:27:
+There may be something wrong with the lfu....---OK

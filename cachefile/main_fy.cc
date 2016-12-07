@@ -10,9 +10,9 @@
 using namespace std;
 
 Memory VMEM;
-Cache L1;
-Cache L2;
-Cache L3;
+Cache *L1 = new Cache();
+Cache *L2 = new Cache();
+//Cache L3;
 
 // ----
 int main()
@@ -21,9 +21,9 @@ int main()
   // set up L3 cache
   // L3.init(3, L3SIZE, L3ASS, L3SETNUM, L3WT, L3WA, L3BUSCYC, L3HITCYC, &VMEM);
   // set up L2 cache
-  L2.init(2, L2SIZE, L2ASS, L2SETNUM, L2WT, L2WA, L2BUSCYC, L2HITCYC, &VMEM /*&L3*/);
+  L2->init(2, L2SIZE, L2ASS, L2SETNUM, L2WT, L2WA, L2BUSCYC, L2HITCYC, &VMEM /*&L3*/);
   // set up L1 cache
-  L1.init(1, L1SIZE, L1ASS, L1SETNUM, L1WT, L1WA, L1BUSCYC, L1HITCYC, &L2);
+  L1->init(1, L1SIZE, L1ASS, L1SETNUM, L1WT, L1WA, L1BUSCYC, L1HITCYC, L2);
 
   int testf = TESTFILE;
   string tracefile;
@@ -73,11 +73,11 @@ int main()
     // printf("%c 0x%lx\n", type_, addr);
     if(type_ == 'r')
     {
-      L1.HandleRequest(addr, tmpbyte, READ_, (unsigned char *)content, hit, totalcycle);
+      L1->HandleRequest(addr, tmpbyte, READ_, (unsigned char *)content, hit, totalcycle);
     }
     else
     {
-      L1.HandleRequest(addr, tmpbyte, WRITE_, (unsigned char *)content, hit, totalcycle);
+      L1->HandleRequest(addr, tmpbyte, WRITE_, (unsigned char *)content, hit, totalcycle);
     }
   }
 
@@ -85,9 +85,9 @@ int main()
   printf("---------------------------------------------------------\n");
   printf("Total access cycle: %d\n\n", totalcycle);
   // output L1 hit time
-  L1.ShowStat();
+  L1->ShowStat();
   // output L2 hit time 
-  L2.ShowStat();
+  L2->ShowStat();
   // output L3 hit time
   // L3.ShowStat();
   // VM stat

@@ -30,7 +30,7 @@
 #define LFU 1
 #define RANDOM 2
 #define FIFO 3
-#define REPLACEPOLICY LRU
+#define REPLACEPOLICY LFU
 
 // write policy
 #define WRITEBACK       0
