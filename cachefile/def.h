@@ -11,6 +11,9 @@
 #define BLOCKNUM_LIMIT 8
 #define LINESIZE_LIMIT 100
 #define MEMSIZE 0x10000
+#define PARTITIONNUM 1024
+#define BYPASS_THRESHOLD 0.5
+#define BYPASS_MISS 100
 
 // trigers for the test& debug
 // #define DEBUG
@@ -31,7 +34,7 @@
 #define RANDOM 2
 #define FIFO 3
 #define PDP 4
-#define REPLACEPOLICY PDP
+#define REPLACEPOLICY LRU
 #define PD 16
 
 // write policy

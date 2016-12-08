@@ -49,6 +49,10 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
   timestamp = 0;
   if(REPLACEPOLICY == RANDOM)
     srand(time(0));
+  for(int i = 0; i < PARTITIONNUM; ++i)
+  {
+    partCtrl[i].access_counter = partCtrl[i].miss_num = 0;
+  }
 }
 
 // ---- Main access process ----
@@ -87,11 +91,11 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
   (stats_.access_counter)++;
 
   // Decide on whether a bypass should take place.
-  if (!BypassDecision()) 
+  if (!BypassDecision(addr)) 
   {
 
     // Generate some infomation for the data partition.
-    PartitionAlgorithm();
+    // PartitionAlgorithm();
 
     // Check whether the required data already exist.
     int targetaddr;
@@ -154,7 +158,8 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     hit = 0;
     (stats_.miss_num)++;
     (stats_.fetch_num)++;
-
+    partCtrl[addr>>38].miss_num++;
+    partCtrl[addr>>38].access_counter++;
     // write not allocate
     // do not load data into current level of cache, directly write next level
     // have not tested, should be good
@@ -192,14 +197,19 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     // If a victim is selected, replace it.
     // Something else should be done here
     // according to your replacement algorithm.
-    ;
+    lower_->HandleRequest(addr, bytes, read, content, hit, cycle);
   }
 }
 
 // ---- decide whether bypass ----
-int Cache::BypassDecision() 
+int Cache::BypassDecision(uint64_t addr) 
 {
-  return FALSE;
+  uint64_t vpn = addr >> 38; //assumed that the addr space is 48 bit
+  float result = (float)partCtrl[vpn].miss_num / partCtrl[vpn].access_counter;
+  if(partCtrl[vpn].miss_num>BYPASS_MISS && result>BYPASS_THRESHOLD)
+    return true;
+  else
+    return false;
 }
 
 // -- obsolete
@@ -238,6 +248,9 @@ void Cache::ReplaceUpdate(bool ishit, uint64_t addr, int target)
 {
   if(ishit == false)
     return;
+  //for bypassing
+  uint64_t vpn = addr >> 38;
+  partCtrl[vpn].access_counter++;
   switch(ReplacePolicy)
   {
   case LRU:

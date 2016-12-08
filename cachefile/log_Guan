@@ -113,7 +113,35 @@ access cycle:     32220400
 There may be something wrong with the lfu....---OK
 
 12/07 00:05
-I try to modify the implentment of the LFU. --But the result is worse.....
+I try to modify the implementation of the LFU. --But the result is worse.....
 
 10:49
 Still try to modify LFU.
+
+13:52
+Implement the naive bypassing.
+LRU(1.trace)
+---------------------------------------------------------
+Total access cycle: 27100834
+
+level 1
+access counter:   612200
+hit numnber:      442510
+miss numnber:     169690
+access cycle:     3673200
+replace number:   169688
+fetch number:     169690
+prefetch number:  0
+
+level 2
+access counter:   354463
+hit numnber:      327655
+miss numnber:     26808
+access cycle:     6380334
+replace number:   26804
+fetch number:     26808
+prefetch number:  0
+
+memory
+access counter:   170473
+access cycle:     17047300

@@ -27,6 +27,11 @@ typedef struct Entry_
   int rd;
 } Entry;
 
+typedef struct Partition_ 
+{
+  int access_counter;
+  int miss_num;
+} Partition;
 class Cache: public Storage 
 {
  public:
@@ -45,7 +50,7 @@ class Cache: public Storage
 
  private:
   // Bypassing
-  int BypassDecision();
+  int BypassDecision(uint64_t addr);
   // Partitioning
   void PartitionAlgorithm();
   // Replacement
@@ -75,6 +80,7 @@ class Cache: public Storage
   DISALLOW_COPY_AND_ASSIGN(Cache);
 
   Entry store[SETSIZE_LIMIT][BLOCKNUM_LIMIT];
+  Partition partCtrl[PARTITIONNUM];
   int s;
   int b;
   uint64_t timestamp;
