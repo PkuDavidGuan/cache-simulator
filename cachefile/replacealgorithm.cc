@@ -43,14 +43,12 @@ void Cache::ReplaceAlgorithm_LFU(uint64_t addr, int &cycle, int read)
   if(voidblock == false)
   {
     stats_.replace_num++;
-    float minnum = 2;
-    float tempfre = 2;
+    uint64_t minnum = TIMESTAMP_LIMIT;
     for(int j = 0; j < config_.associativity; ++j)
     {
-    	tempfre = store[vpn][j].frequency / (stats_.access_counter-store[vpn][j].begin_access);
-      if(tempfre < minnum)
+      if(store[vpn][j].frequency < minnum)
       {
-        minnum = tempfre;
+        minnum = store[vpn][j].frequency;
         lfu = j;
       }
     }
@@ -72,8 +70,14 @@ void Cache::ReplaceAlgorithm_LFU(uint64_t addr, int &cycle, int read)
 
   // printf("setting cache line %d valid\n", lru);
   store[vpn][lfu].valid = true;
+  if(stats_.access_counter % 32 == 0)
+  {	
+  	for(int j = 0; j < config_.associativity; ++j)
+  	{
+      	store[vpn][j].frequency >>= 1;
+  	}
+  }
   store[vpn][lfu].frequency = 1;
-  store[vpn][lfu].begin_access = stats_.access_counter - 1;
   #ifdef DEBUG
   printf("cacle level %d, vpn %d, lfu %d, increase timestamp %lu\n", level, (int)vpn, lfu, timestamp);
   #endif
@@ -86,7 +90,18 @@ void Cache::ReplaceAlgorithm_LFU(uint64_t addr, int &cycle, int read)
 void Cache::LFU_update(bool ishit, uint64_t addr, int target)
 {
 	if(ishit)
+	{
 		store[(addr << (64-s-b)) >> (64-s)][target].frequency++;
+		int vpn = (addr << (64-s-b)) >> (64-s);
+		if(stats_.access_counter % 32 == 0)
+  		{	
+  			for(int j = 0; j < config_.associativity; ++j)
+  			{
+      			if(j != target)
+      				store[vpn][j].frequency >>= 1;
+  			}
+  		}
+	}
 }
 
 // ---- FIFO ----
@@ -166,7 +181,6 @@ void Cache::ReplaceAlgorithm_RANDOM(uint64_t addr, int &cycle, int read)
   #ifdef DEBUG
   printf("cache level %d, RANDOM replacement\n", level);
   #endif
-
   uint64_t vpn = (addr << (64-s-b)) >> (64-s);
   uint64_t vpo = (addr << (64-b)) >> (64-b);
   uint64_t flag = addr >> (s+b);
@@ -256,6 +270,7 @@ void Cache::ReplaceAlgorithm_PDP(uint64_t addr, int &cycle, int read)
   #endif
   if(voidblock == false)
   {
+  	stats_.replace_num++;
   	for(int j = 0; j < config_.associativity; ++j)
   	{
   		if(store[vpn][j].rd == 0)
@@ -324,7 +339,8 @@ void Cache::ReplaceAlgorithm_PDP(uint64_t addr, int &cycle, int read)
   store[vpn][lfu].reused = false;
   for(int j = 0; j < config_.associativity; ++j)
   {
-  	store[vpn][j].rd--;
+  	if(store[vpn][j].rd > 0)
+  		store[vpn][j].rd--;
   }
   #ifdef DEBUG
   printf("cacle level %d, vpn %d, random %d, increase timestamp %lu\n", level, (int)vpn, lfu, timestamp);
@@ -343,7 +359,8 @@ void Cache::PDP_update(bool ishit, uint64_t addr, int target)
 		store[vpn][target].rd = PD;
 		for(int j = 0; j < config_.associativity; ++j)
 		{
-			store[vpn][j].rd--;
+			if(store[vpn][j].rd > 0)
+				store[vpn][j].rd--;
 		}
 	}
 }

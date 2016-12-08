@@ -23,7 +23,7 @@
 #define BZIPX       3
 #define SIXPACKX    4
 #define QUICKSORTX  5
-#define TESTFILE    QUICKSORTX
+#define TESTFILE    5
 
 // cache replacement policy
 #define LRU 0
@@ -32,7 +32,7 @@
 #define FIFO 3
 #define PDP 4
 #define REPLACEPOLICY PDP
-#define PD 128
+#define PD 16
 
 // write policy
 #define WRITEBACK       0

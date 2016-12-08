@@ -22,7 +22,6 @@ typedef struct Entry_
   unsigned char c[LINESIZE_LIMIT];
   uint64_t recent;
   uint64_t frequency;
-  int begin_access;
   bool dirty;
   bool reused;
   int rd;

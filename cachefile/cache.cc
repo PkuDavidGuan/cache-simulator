@@ -2,6 +2,7 @@
 #include "def.h"
 #include "string.h"
 #include <stdlib.h>
+#include <time.h>
 
 // ---- cache constructor ----
 void Cache::init(int _level, uint64_t _size, int _ass, int _setnum, 
@@ -25,7 +26,6 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
       store[i][j].flag = 0;
       store[i][j].recent = 0;
       store[i][j].frequency = 0;
-      store[i][j].begin_access = 0;
       store[i][j].dirty = false;
       store[i][j].reused = false;
       store[i][j].rd = PD;
@@ -47,6 +47,8 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
   }
 
   timestamp = 0;
+  if(REPLACEPOLICY == RANDOM)
+    srand(time(0));
 }
 
 // ---- Main access process ----
