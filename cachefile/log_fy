@@ -76,3 +76,6 @@ start from yesterday
 12:15
 implemented prefetch framework and always prefetch
 need to do test
+
+17:25
+prefetch teste, but still seems like something wrong, why so high hit rate?
