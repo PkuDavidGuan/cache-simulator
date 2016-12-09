@@ -18,7 +18,7 @@
 
 // trigers for the test& debug
 #define DEBUG
-// #define TEST
+#define TEST
 #define DEBUG_PREFETCH
 #define CACHE
 
@@ -29,7 +29,7 @@
 #define BZIPX       3
 #define SIXPACKX    4
 #define QUICKSORTX  5
-#define TESTFILE    QUICKSORTX
+#define TESTFILE    TESTX
 
 // cache replacement policy
 #define LRU             0
