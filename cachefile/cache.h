@@ -101,7 +101,7 @@ class Cache: public Storage
   void PartitionAlgorithm();
 
   // Replacement
-  bool ReplaceDecision(uint64_t addr, int &target);
+  bool ReplaceDecision(uint64_t addr, int &target, int read);
   void ReplaceAlgorithm(uint64_t addr, int &cycle, int read);
 
   void ReplaceUpdate(bool ishit, uint64_t addr, int target);

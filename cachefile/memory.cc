@@ -6,8 +6,9 @@ void Memory::HandleRequest(uint64_t addr, int bytes, int read,
 {
   #ifdef DEBUG
   printf("\n\nmemory, handle request at addr: %lx",  addr);
-  if(read == READ_) printf("  READ\n");
-  else printf("  WRITE\n");
+  if(read == READ_) printf("  READ\n\n\n");
+  else if(read == WRITE_) printf("  WRITE\n\n\n");
+  else printf("  READ_PREFETCH\n\n\n");
   #endif
   // stats update
   // never update on prefetch

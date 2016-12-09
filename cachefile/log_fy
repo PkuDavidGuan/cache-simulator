@@ -41,10 +41,11 @@ THU 8TH DEC 2016
 19:41 
 started prefetch algorithm
 
-name convension:
+task state:
 [implemented]   finished coding, need to do test
 [GOOD]          tested
 [abandoned]     abandoned because not useful or not appliable
+[TBC]           to be continue
 
 NOTE:
 --  when prefetching, assume prefetch from memory

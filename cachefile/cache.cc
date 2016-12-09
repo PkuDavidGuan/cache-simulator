@@ -75,7 +75,8 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
   #ifdef DEBUG
   printf("\n\ncache level %d, handle request at addr: %lx", level, addr);
   if(read == READ_) printf("  READ\n");
-  else printf("  WRITE\n");
+  else if(read == WRITE_) printf("  WRITE\n");
+  else printf("  READ_PREFETCH\n");
   #endif
 
   // time stamp update
@@ -112,16 +113,30 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
 
     // hit or miss
     // tested
-    if (ReplaceDecision(addr, targetaddr)) 
+    if (ReplaceDecision(addr, targetaddr, read)) 
     {
       // Hit!
       // update the storage status
       #ifdef DEBUG
       printf("cache level %d, ", level);
       if(read == READ_) printf("READ hit\n");
-      else printf("WRITE hit\n");
+      else if(read == WRITE_) printf("WRITE hit\n");
+      else printf("READ_PREFETCH hit\n");
       #endif    
       hit = 1;
+
+      if (PrefetchDecision(read)) 
+      {
+        // Fetch the other data via HandleRequest() recursively.
+        // To distinguish from the normal requests,
+        // the 2|3 is employed for prefetched write|read data
+        // while the 0|1 for normal ones.
+        #ifdef DEBUG_PREFETCH
+        printf("cache level %d, decide to do prefetch....\n", level);
+        #endif
+        stats_.prefetch_num++;
+        PrefetchAlgorithm();
+      }
 
       // read the cache
       if(read == READ_)
@@ -152,7 +167,6 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
       else//prefetch
       {
         ;
-        // still do not need to do anything
       }
       return;
     }
@@ -162,7 +176,8 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     #ifdef DEBUG
     printf("cache level %d, ", level);
     if(read == READ_) printf("READ miss\n");
-    else printf("WRITE miss\n");
+    else if(read == WRITE_) printf("WRITE miss\n");
+    else printf("READ_PREFETCH miss\n");
     #endif 
     hit = 0;
     if(read != READ_PREFETCH)
@@ -195,13 +210,17 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     }
     
     // Decide on whether a prefetch should take place.
+    // printf(" -----------------------------------  fx\n");
     if (PrefetchDecision(read)) 
     {
       // Fetch the other data via HandleRequest() recursively.
       // To distinguish from the normal requests,
       // the 2|3 is employed for prefetched write|read data
       // while the 0|1 for normal ones.
-      printf("decide to do prefetch....\n");
+      #ifdef DEBUG_PREFETCH
+      printf("cache level %d, decide to do prefetch....\n", level);
+      #endif
+      stats_.prefetch_num++;
       PrefetchAlgorithm();
     }
   }
@@ -236,7 +255,7 @@ void Cache::PartitionAlgorithm()
 
 // ---- whether hit or miss ----
 // Hit, return true; miss, return false.
-bool Cache::ReplaceDecision(uint64_t addr, int &target) 
+bool Cache::ReplaceDecision(uint64_t addr, int &target, int read) 
 {
   #ifdef DEBUG
   printf("cache level %d, replacement decision\n", level);
@@ -255,14 +274,27 @@ bool Cache::ReplaceDecision(uint64_t addr, int &target)
       target = j;
       ishit = true;
       // if this is a prefetch hit
-      if(store[vpn][j].prefetch) stats_.useful_prefetch++;
+      if(store[vpn][j].prefetch && read != READ_PREFETCH)
+      {
+        stats_.useful_prefetch++;
+        #ifdef DEBUG
+        printf("hit because of useful prefetch\n");
+        #endif
+      }
       break;
     }
   }
 
   // detect harmful prefetch
   // addr not hit because of evicted by prefetch
-  if(!ishit && evict_queue.IsMember(ROUND_TO_BASE(addr))) stats_.harmful_prefetch++;
+  if(!ishit && evict_queue.IsMember(ROUND_TO_BASE(addr)))
+  {
+    #ifdef DEBUG
+    printf("rounded address %lx\n", ROUND_TO_BASE(addr));
+    printf("miss because of harmful prefetch\n");
+    #endif
+    stats_.harmful_prefetch++;
+  }
 
   ReplaceUpdate(ishit, addr, target);
   return ishit;
@@ -385,6 +417,8 @@ void Cache::ShowStat()
   printf("fetch number:     %d\n", stats_.fetch_num);
   // printf("fetch number - replace number = cold start number\n");
   // printf("prefetch number: numbers that we perform prefetch\n");
-  printf("prefetch number:  %d\n\n", stats_.prefetch_num);
+  printf("prefetch number:  %d\n", stats_.prefetch_num);
+  printf("useful prefetch:  %d\n", stats_.useful_prefetch);
+  printf("harmful prefetch: %d\n\n", stats_.harmful_prefetch);
   return;
 }

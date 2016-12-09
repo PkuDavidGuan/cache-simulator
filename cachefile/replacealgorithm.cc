@@ -61,7 +61,7 @@ uint64_t Cache::ReplaceAlgorithm_LRU(uint64_t addr, int &cycle, int read)
       }
     }
     #ifdef DEBUG
-    printf("evict cecheline: set %d, block %d\n", (int)vpn, lru);
+    printf("evict cecheline: set %d, block %d, addr %lx\n", (int)vpn, lru, store[vpn][lru].base_addr);
     #endif
 
     //if write back and the entry is dirty, update the lower cache

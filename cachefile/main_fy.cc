@@ -21,9 +21,9 @@ int main()
   // set up L3 cache
   // L3.init(3, L3SIZE, L3ASS, L3SETNUM, L3WT, L3WA, L3BUSCYC, L3HITCYC, &VMEM);
   // set up L2 cache
-  L2->init(2, L2SIZE, L2ASS, L2SETNUM, L2WT, L2WA, L2BUSCYC, L2HITCYC, &VMEM, PREFETCHPOLICY/*&L3*/);
+  L2->init(2, L2SIZE, L2ASS, L2SETNUM, L2WT, L2WA, L2BUSCYC, L2HITCYC, &VMEM, NEVER/*&L3*/);
   // set up L1 cache
-  L1->init(1, L1SIZE, L1ASS, L1SETNUM, L1WT, L1WA, L1BUSCYC, L1HITCYC, L2, NEVER);
+  L1->init(1, L1SIZE, L1ASS, L1SETNUM, L1WT, L1WA, L1BUSCYC, L1HITCYC, L2, PREFETCHPOLICY);
 
   int testf = TESTFILE;
   string tracefile;
@@ -32,7 +32,7 @@ int main()
   // --  note here we do it streamly
   switch(testf)
   {
-  case TEST:
+  case TESTX:
     tracefile = "../trace/test.trace";
     break;
   case GCCX:

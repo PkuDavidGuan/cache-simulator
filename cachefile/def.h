@@ -17,12 +17,13 @@
 #define BYPASS_MISS 100
 
 // trigers for the test& debug
-// #define DEBUG
+#define DEBUG
+// #define TEST
 #define DEBUG_PREFETCH
 #define CACHE
 
 // trigers for select test file
-#define TEST        0
+#define TESTX       0
 #define GCCX        1
 #define SWIMX       2
 #define BZIPX       3
@@ -40,7 +41,7 @@
 #define PD              16
 
 // prefetch number
-#define PREFETCHNUM 4
+#define PREFETCHNUM 1
 
 // prefetch policy
 #define NEVER           0
