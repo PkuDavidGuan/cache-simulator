@@ -1,12 +1,15 @@
 #include "cache.h"
 #include "def.h"
+#include "memory.h"
 #include "string.h"
 #include <stdlib.h>
 #include <time.h>
 
+extern Memory VMEM;
+
 // ---- cache constructor ----
 void Cache::init(int _level, uint64_t _size, int _ass, int _setnum, 
-  int _wt, int _wa, int _buscyc, int _hitcyc, Storage *_low)
+  int _wt, int _wa, int _buscyc, int _hitcyc, Storage *_low, int _PrefetchPolicy)
 {
   config_.size = _size;
   config_.associativity = _ass;
@@ -18,6 +21,7 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
   level = _level;
   lower_ = _low;
   ReplacePolicy = REPLACEPOLICY;
+  PrefetchPolicy = _PrefetchPolicy;
 
   for(int i = 0; i < _setnum; ++i)
     for(int j = 0; j < _ass; ++j)
@@ -84,14 +88,18 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
   }
 
   // total cycle update
-  cycle += latency_.hit_latency + latency_.bus_latency;
-
-  // storage status update
-  stats_.access_cycle += latency_.hit_latency + latency_.bus_latency;
-  (stats_.access_counter)++;
+  // NOTE: if prefetch, do not need to update this guy
+  if(read != READ_PREFETCH)
+  {
+    current_addr = addr;
+    cycle += latency_.hit_latency + latency_.bus_latency;
+    // storage status update
+    stats_.access_cycle += latency_.hit_latency + latency_.bus_latency;
+    (stats_.access_counter)++;
+  }
 
   // Decide on whether a bypass should take place.
-  if (!BypassDecision(addr)) 
+  if (!BypassDecision(addr, read)) 
   {
 
     // Generate some infomation for the data partition.
@@ -144,6 +152,7 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
       else//prefetch
       {
         ;
+        // still do not need to do anything
       }
       return;
     }
@@ -156,10 +165,15 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     else printf("WRITE miss\n");
     #endif 
     hit = 0;
-    (stats_.miss_num)++;
-    (stats_.fetch_num)++;
+    if(read != READ_PREFETCH)
+    {
+      (stats_.miss_num)++;
+      (stats_.fetch_num)++;
+    }
+
     partCtrl[addr>>38].miss_num++;
     partCtrl[addr>>38].access_counter++;
+
     // write not allocate
     // do not load data into current level of cache, directly write next level
     // have not tested, should be good
@@ -168,24 +182,26 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
       // printf("%lx Miss. Write not allocated.\n", addr);
       lower_->HandleRequest(addr, bytes, read, content, hit, cycle);
     }
-    // write allocate or read
+    // write allocate or read or read prefetch
     else
     {
       // choose a victim to replace, and do not write to the next level of the cache 
       ReplaceAlgorithm(addr, cycle, read);
-      // load it from next level of cache 
-      // note that here we use READ_, instead of previous read
-      lower_->HandleRequest(addr, bytes, READ_, content, hit, cycle);
+      // if prefetch load it from VM
+      if(read == READ_PREFETCH) VMEM.HandleRequest(addr, bytes, READ_PREFETCH, content, hit, cycle);
+      // else, read from lower cache
+      else lower_->HandleRequest(addr, bytes, READ_, content, hit, cycle);
       // put the new cache line into cache(shall we do this in ReplaceAlgorithm? -- I think so)
     }
     
     // Decide on whether a prefetch should take place.
-    if (PrefetchDecision()) 
+    if (PrefetchDecision(read)) 
     {
       // Fetch the other data via HandleRequest() recursively.
       // To distinguish from the normal requests,
       // the 2|3 is employed for prefetched write|read data
       // while the 0|1 for normal ones.
+      printf("decide to do prefetch....\n");
       PrefetchAlgorithm();
     }
   }
@@ -202,8 +218,9 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
 }
 
 // ---- decide whether bypass ----
-int Cache::BypassDecision(uint64_t addr) 
+int Cache::BypassDecision(uint64_t addr, int read) 
 {
+  if(read == READ_PREFETCH)  return false;
   uint64_t vpn = addr >> 38; //assumed that the addr space is 48 bit
   float result = (float)partCtrl[vpn].miss_num / partCtrl[vpn].access_counter;
   if(partCtrl[vpn].miss_num>BYPASS_MISS && result>BYPASS_THRESHOLD)
@@ -237,9 +254,16 @@ bool Cache::ReplaceDecision(uint64_t addr, int &target)
     {
       target = j;
       ishit = true;
+      // if this is a prefetch hit
+      if(store[vpn][j].prefetch) stats_.useful_prefetch++;
       break;
     }
   }
+
+  // detect harmful prefetch
+  // addr not hit because of evicted by prefetch
+  if(!ishit && evict_queue.IsMember(ROUND_TO_BASE(addr))) stats_.harmful_prefetch++;
+
   ReplaceUpdate(ishit, addr, target);
   return ishit;
 }
@@ -270,123 +294,70 @@ void Cache::ReplaceUpdate(bool ishit, uint64_t addr, int target)
   }
 }
 
-void Cache::LRU_update(bool ishit, uint64_t addr, int target)
-{
-  uint64_t vpn = (addr << (64-s-b)) >> (64-s);
-  if(ishit) store[vpn][target].recent = timestamp;
-  return;
-}
-
 // ---- dispatch the replace algorithm ----
 void Cache::ReplaceAlgorithm(uint64_t addr, int &cycle, int read)
 {
+  uint64_t evicted_addr;
   switch(ReplacePolicy)
   {
   case LRU:
-    return ReplaceAlgorithm_LRU(addr, cycle, read);
+    evicted_addr = ReplaceAlgorithm_LRU(addr, cycle, read);
+    break;
   case LFU:
-    return ReplaceAlgorithm_LFU(addr, cycle, read);
+    evicted_addr = ReplaceAlgorithm_LFU(addr, cycle, read);
+    break;
   case FIFO:
-    return ReplaceAlgorithm_FIFO(addr, cycle, read);
+    evicted_addr = ReplaceAlgorithm_FIFO(addr, cycle, read);
+    break;
   case RANDOM:
-    return ReplaceAlgorithm_RANDOM(addr, cycle, read);
+    evicted_addr = ReplaceAlgorithm_RANDOM(addr, cycle, read);
+    break;
   case PDP:
-    ReplaceAlgorithm_PDP(addr, cycle, read);
+    evicted_addr = ReplaceAlgorithm_PDP(addr, cycle, read);
     break;
   default:
     printf("error: replace algorithm have not implemented!\n");
     exit(1);
   }
+
+  // evicted by prefetch
+  if(read == READ_PREFETCH) evict_queue.push(evicted_addr);
 }
-
-// ---- LRU policy ----
-// find a lru entry, replace it 
-// -- here we only need to mark the flag as the new flag
-// if the replaced entry is a dirty entry and we are implementing write back
-//    then write it back
-// if the replaced entry is not dirty, simply replace it 
-void Cache::ReplaceAlgorithm_LRU(uint64_t addr, int &cycle, int read)
-{
-  #ifdef DEBUG
-  printf("cache level %d, LRU replacement\n", level);
-  #endif
-
-  uint64_t vpn = (addr << (64-s-b)) >> (64-s);
-  uint64_t vpo = (addr << (64-b)) >> (64-b);
-  uint64_t flag = addr >> (s+b);
-  bool voidblock = false;
-  int lru = 0;           
-  int temphit;
-
-  // cold start?
-  for(int j = 0; j < config_.associativity; ++j)
-  {
-    if(store[vpn][j].valid == false)
-    {
-      
-      voidblock = true;
-      lru = j;
-      //printf("Prime: %d\n", lru);
-      break;
-    }
-  }
-
-  #ifdef DEBUG
-  if(voidblock) printf("cold start, choose a empty cecheline: set %d, block %d\n", (int)vpn, lru);
-  #endif
-
-  // no empty entry, find lru
-  // tested
-  if(voidblock == false)
-  {
-    stats_.replace_num++;
-    uint64_t minnum = TIMESTAMP_LIMIT;
-    for(int j = 0; j < config_.associativity; ++j)
-    {
-      if(store[vpn][j].recent < minnum)
-      {
-        minnum = store[vpn][j].recent;
-        lru = j;
-      }
-    }
-    #ifdef DEBUG
-    printf("evict cecheline: set %d, block %d\n", (int)vpn, lru);
-    #endif
-
-    //if write back and the entry is dirty, update the lower cache
-    // tested
-    if(config_.write_through == WRITEBACK && store[vpn][lru].dirty)
-    {
-      #ifdef DEBUG
-      printf("cache set %d, block %d, dirty write, write to next level of cache\n", (int)vpn, lru);
-      #endif
-      //write back the sacrified page
-      lower_->HandleRequest((store[vpn][lru].flag << (s+b))+(vpn << b), 1 << b, 0, store[vpn][lru].c, temphit, cycle);
-    }
-  }
-
-  // printf("setting cache line %d valid\n", lru);
-  store[vpn][lru].valid = true;
-  store[vpn][lru].recent = timestamp;
-  #ifdef DEBUG
-  printf("cacle level %d, vpn %d, lru %d, increase timestamp %lu\n", level, (int)vpn, lru, timestamp);
-  #endif
-  store[vpn][lru].flag = flag;
-  if(read == READ_) store[vpn][lru].dirty = false;
-  else store[vpn][lru].dirty = true;
-}
-
 
 // ---- whether prefetch ----
-int Cache::PrefetchDecision() 
+int Cache::PrefetchDecision(int read) 
 {
-  return FALSE;
+  // if already prefetching, do not prefetch again
+  if(read == READ_PREFETCH) return FALSE;
+  switch(PrefetchPolicy)
+  {
+  case ALWAYS:
+    return TRUE;
+  case TAGGED:
+    return PrefetchDecision_TAGGED();
+  case LEARNED:
+    return PrefetchDecision_LEARNED();
+  default:
+    return FALSE;
+  }
 }
 
 
 // ---- how to prefetch ----
 void Cache::PrefetchAlgorithm() 
 {
+  switch(PrefetchPolicy)
+  {
+  case ALWAYS:
+    AlwaysPrefetch(PREFETCHNUM);
+    return;
+  case TAGGED:
+    TaggedPrefetch(PREFETCHNUM);
+  case LEARNED:
+    LearnedPrefetch(PREFETCHNUM);
+  default:
+    return;
+  }
 }
 
 

@@ -5,6 +5,7 @@
 #define FALSE 0
 #define READ_ 1
 #define WRITE_ 0
+#define READ_PREFETCH 4
 
 #define TIMESTAMP_LIMIT 0xffffffffffff0000
 #define SETSIZE_LIMIT 0x200000
@@ -17,6 +18,7 @@
 
 // trigers for the test& debug
 // #define DEBUG
+#define DEBUG_PREFETCH
 #define CACHE
 
 // trigers for select test file
@@ -26,16 +28,26 @@
 #define BZIPX       3
 #define SIXPACKX    4
 #define QUICKSORTX  5
-#define TESTFILE    5
+#define TESTFILE    QUICKSORTX
 
 // cache replacement policy
-#define LRU 0
-#define LFU 1
-#define RANDOM 2
-#define FIFO 3
-#define PDP 4
-#define REPLACEPOLICY LRU
-#define PD 16
+#define LRU             0
+#define LFU             1
+#define RANDOM          2
+#define FIFO            3
+#define PDP             4
+#define REPLACEPOLICY   LRU
+#define PD              16
+
+// prefetch number
+#define PREFETCHNUM 4
+
+// prefetch policy
+#define NEVER           0
+#define ALWAYS          1
+#define TAGGED          2
+#define LEARNED         3
+#define PREFETCHPOLICY  NEVER
 
 // write policy
 #define WRITEBACK       0

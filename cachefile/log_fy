@@ -26,11 +26,47 @@ continue
 
 test: use the test.trace and the TEST macro definition
 tested:
-- hit& miss -- GOOD
-- write back -- GOOD
-- write allocate -- GOOD
+- hit& miss             -- GOOD
+- write back            -- GOOD
+- write allocate        -- GOOD
 - lru -- GOOD
-- time calculation -- GOOD
+- time calculation      -- GOOD
 need to test:
 - write through
 - write not allocate
+
+-------------------------------------------------------------------------
+THU 8TH DEC 2016
+
+19:41 
+started prefetch algorithm
+
+NOTE:
+--  when prefetching, assume prefetch from memory
+    we do this recursively
+    note still something wrong with the recursion, need to fix it. if READ_PREFETCH from upper level of cache, bypass it 
+    see prefetch algorithm description:
+
+need to implement:
+--  prefetch stretagy
+    --  always prefetch
+        after handle the request, prefetch the next number of cache line
+    --  tagged prefetch
+    --  learned prefetch (optional)
+--  prefetch evaluation
+    --  useful prefetch
+    --  useless prefetch 
+    --  harmful prefetch
+
+20:50
+preempted by pku youth
+
+-------------------------------------------------------------------------
+THU 9TH DEC 2016
+
+10:30
+start from yesterday
+
+12:15
+implemented prefetch framework and always prefetch
+need to do test

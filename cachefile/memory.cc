@@ -10,10 +10,13 @@ void Memory::HandleRequest(uint64_t addr, int bytes, int read,
   else printf("  WRITE\n");
   #endif
   // stats update
-  cycle += latency_.hit_latency;
-  stats_.access_counter++;
-  stats_.access_cycle += latency_.hit_latency;
-
+  // never update on prefetch
+  if(read != READ_PREFETCH)
+  {
+    cycle += latency_.hit_latency;
+    stats_.access_counter++;
+    stats_.access_cycle += latency_.hit_latency;
+  }
   hit = 1;
 }
 

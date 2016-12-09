@@ -2,7 +2,7 @@ CC=g++
 
 all: sim
 
-sim: main_fy.o cache.o memory.o replacealgorithm.o
+sim: main_fy.o cache.o memory.o replacealgorithm.o prefetchalgorithm.o
 	$(CC) -g -mcmodel=large -o $@ $^
 
 main_fy.o: cache.h
@@ -16,6 +16,9 @@ memory.o: memory.h
 
 replacealgorithm.o: cache.h def.h
 	$(CC) -g -mcmodel=large -c replacealgorithm.cc
+
+prefetchalgorithm.o: cache.h def.h
+	$(CC) -g -mcmodel=large -c prefetchalgorithm.cc
 
 .PHONY: clean
 clean:

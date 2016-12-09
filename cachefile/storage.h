@@ -18,6 +18,8 @@ typedef struct StorageStats_
   int replace_num;      // times of evicting old lines
   int fetch_num;        // times of fetching from lower layer
   int prefetch_num;     // times that we do Prefetch
+  int useful_prefetch;  // 
+  int harmful_prefetch; //
 } StorageStats;
 
 // Storage basic config
