@@ -78,7 +78,7 @@
 #define L1WT WRITEBACK
 #define L1WA WRITEALLOC
 #define L1BUSCYC 0
-#define L1HITCYC 6
+#define L1HITCYC 4
 
 // L2 cache
 #ifdef TEST
@@ -94,8 +94,8 @@
 #define L2SETNUM ((L2SIZE) / (L2LINESIZE * L2ASS)) // should be two sets
 #define L2WT WRITEBACK
 #define L2WA WRITEALLOC
-#define L2BUSCYC 3
-#define L2HITCYC 15
+#define L2BUSCYC 6
+#define L2HITCYC 5
 
 // L3 cache
 #define L3SIZE 0x8000000            // 128M 

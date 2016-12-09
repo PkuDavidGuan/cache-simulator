@@ -41,6 +41,11 @@ THU 8TH DEC 2016
 19:41 
 started prefetch algorithm
 
+name convension:
+[implemented]   finished coding, need to do test
+[GOOD]          tested
+[abandoned]     abandoned because not useful or not appliable
+
 NOTE:
 --  when prefetching, assume prefetch from memory
     we do this recursively
@@ -48,15 +53,15 @@ NOTE:
     see prefetch algorithm description:
 
 need to implement:
---  prefetch stretagy
-    --  always prefetch
+--  prefetch stretagy       
+    --  always prefetch                 -- implemented
         after handle the request, prefetch the next number of cache line
-    --  tagged prefetch
-    --  learned prefetch (optional)
---  prefetch evaluation
-    --  useful prefetch
-    --  useless prefetch 
-    --  harmful prefetch
+    --  tagged prefetch                 -- TBC
+    --  learned prefetch (optional)     -- TBC
+--  prefetch evaluation                 
+    --  useful prefetch                 -- implemented
+    --  useless prefetch                -- abandoned
+    --  harmful prefetch                -- implemented
 
 20:50
 preempted by pku youth
