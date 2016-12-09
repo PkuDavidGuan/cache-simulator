@@ -48,7 +48,7 @@ void Cache::AlwaysPrefetch(int prefetch_num)
   uint64_t prefetch_addr;
   char tmpcontent[100];
   int hit;
-  int cycle;
+  int cycle = 0;
   #ifdef DEBUG_PREFETCH
   printf("current addr: %lx\n", current_addr);
   #endif
@@ -56,6 +56,7 @@ void Cache::AlwaysPrefetch(int prefetch_num)
   {
     prefetch_addr = GetPrefetchAddr(current_addr, config_.line_size, (i + 1));
     #ifdef DEBUG_PREFETCH
+    printf("line size: %d\n", config_.line_size);
     printf("prefetching addr: %lx\n", prefetch_addr);
     #endif
     HandleRequest(prefetch_addr, config_.line_size, READ_PREFETCH, (unsigned char *)tmpcontent, hit, cycle);

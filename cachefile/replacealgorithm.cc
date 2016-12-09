@@ -46,6 +46,8 @@ uint64_t Cache::ReplaceAlgorithm_LRU(uint64_t addr, int &cycle, int read)
   if(voidblock) printf("cold start, choose a empty cecheline: set %d, block %d\n", (int)vpn, lru);
   #endif
 
+  if(voidblock && read != READ_PREFETCH) stats_.warmup_num ++;
+
   // no empty entry, find lru
   // tested
   if(voidblock == false)
@@ -64,15 +66,15 @@ uint64_t Cache::ReplaceAlgorithm_LRU(uint64_t addr, int &cycle, int read)
     printf("evict cecheline: set %d, block %d, addr %lx\n", (int)vpn, lru, store[vpn][lru].base_addr);
     #endif
 
-    //if write back and the entry is dirty, update the lower cache
+    // if write back and the entry is dirty, update the lower cache
     // tested
     if(config_.write_through == WRITEBACK && store[vpn][lru].dirty)
     {
       #ifdef DEBUG
       printf("cache set %d, block %d, dirty write, write to next level of cache\n", (int)vpn, lru);
       #endif
-      //write back the sacrified page
-      lower_->HandleRequest((store[vpn][lru].flag << (s+b))+(vpn << b), 1 << b, 0, store[vpn][lru].c, temphit, cycle);
+      // write back the sacrified page, do not count time
+      lower_->HandleRequest((store[vpn][lru].flag << (s+b))+(vpn << b), 1 << b, 0, store[vpn][lru].c, temphit, cycle, EVICTED);
     }
   }
 

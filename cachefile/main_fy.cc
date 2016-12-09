@@ -21,9 +21,14 @@ int main()
   // set up L3 cache
   // L3.init(3, L3SIZE, L3ASS, L3SETNUM, L3WT, L3WA, L3BUSCYC, L3HITCYC, &VMEM);
   // set up L2 cache
-  L2->init(2, L2SIZE, L2ASS, L2SETNUM, L2WT, L2WA, L2BUSCYC, L2HITCYC, &VMEM, NEVER/*&L3*/);
+  L2->init(2, L2SIZE, L2ASS, L2SETNUM, L2WT, L2WA, L2BUSCYC, L2HITCYC, &VMEM, L2PREFETCHPOLICY);
   // set up L1 cache
-  L1->init(1, L1SIZE, L1ASS, L1SETNUM, L1WT, L1WA, L1BUSCYC, L1HITCYC, L2, PREFETCHPOLICY);
+  L1->init(1, L1SIZE, L1ASS, L1SETNUM, L1WT, L1WA, L1BUSCYC, L1HITCYC, L2, L1PREFETCHPOLICY);
+
+  printf("-------------------------------------------------------------\n");
+  printf("cache configuration\n");
+  L1->ShowConfig();
+  L2->ShowConfig();
 
   int testf = TESTFILE;
   string tracefile;
@@ -48,7 +53,7 @@ int main()
     tracefile = "../trace/sixpackx.trace";
     break;
   case QUICKSORTX:
-    tracefile = "../trace/1.trace";
+    tracefile = "../trace/2.trace";
     break;
   default:
     tracefile = "../trace/test.trace";

@@ -1,8 +1,9 @@
 #include "memory.h"
 #include "string.h"
+#include "def.h"
 
 void Memory::HandleRequest(uint64_t addr, int bytes, int read,
-                          unsigned char *content, int &hit, int &cycle) 
+                          unsigned char *content, int &hit, int &cycle, int evicted) 
 {
   #ifdef DEBUG
   printf("\n\nmemory, handle request at addr: %lx",  addr);
@@ -12,11 +13,14 @@ void Memory::HandleRequest(uint64_t addr, int bytes, int read,
   #endif
   // stats update
   // never update on prefetch
-  if(read != READ_PREFETCH)
+  if(read != READ_PREFETCH && evicted != EVICTED)
   {
-    cycle += latency_.hit_latency;
     stats_.access_counter++;
     stats_.access_cycle += latency_.hit_latency;
+    cycle += latency_.hit_latency;
+    #ifdef DEBUG
+    printf("accessing memory, cycle = %d\n", cycle);
+    #endif
   }
   hit = 1;
 }

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "def.h"
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&); \
@@ -20,6 +21,7 @@ typedef struct StorageStats_
   int prefetch_num;     // times that we do Prefetch
   int useful_prefetch;  // 
   int harmful_prefetch; //
+  int warmup_num;
 } StorageStats;
 
 // Storage basic config
@@ -54,7 +56,7 @@ class Storage
   // [out] hit: 0|1 for miss|hit
   // [out] cycle: total access cycle
   virtual void HandleRequest(uint64_t addr, int bytes, int read,
-                             unsigned char *content, int &hit, int &cycle) = 0;
+                             unsigned char *content, int &hit, int &cycle, int evicted = NOT_EVICTED) = 0;
   virtual void ShowStat() = 0;
 
  protected:

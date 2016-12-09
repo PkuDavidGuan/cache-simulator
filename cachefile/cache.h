@@ -91,8 +91,9 @@ class Cache: public Storage
   void SetLower(Storage *ll) { lower_ = ll; }
   // Main access process
   void HandleRequest(uint64_t addr, int bytes, int read,
-                     unsigned char *content, int &hit, int &cycle);
+                     unsigned char *content, int &hit, int &cycle, int evicted = NOT_EVICTED);
   void ShowStat();
+  void ShowConfig();
 
  private:
   // Bypassing
@@ -119,7 +120,7 @@ class Cache: public Storage
   uint64_t ReplaceAlgorithm_PDP(uint64_t addr, int &cycle, int read);
 
   // Prefetching
-  int PrefetchDecision(int read);
+  int PrefetchDecision(int read, int evicted);
   bool PrefetchDecision_TAGGED();
   bool PrefetchDecision_LEARNED();
 

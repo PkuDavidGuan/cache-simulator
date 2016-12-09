@@ -16,10 +16,13 @@
 #define BYPASS_THRESHOLD 0.5
 #define BYPASS_MISS 100
 
+#define EVICTED     1
+#define NOT_EVICTED 0
+
 // trigers for the test& debug
-#define DEBUG
-#define TEST
-#define DEBUG_PREFETCH
+// #define DEBUG
+// #define TEST
+// #define DEBUG_PREFETCH
 #define CACHE
 
 // trigers for select test file
@@ -29,7 +32,7 @@
 #define BZIPX       3
 #define SIXPACKX    4
 #define QUICKSORTX  5
-#define TESTFILE    TESTX
+#define TESTFILE    SWIMX
 
 // cache replacement policy
 #define LRU             0
@@ -41,14 +44,15 @@
 #define PD              16
 
 // prefetch number
-#define PREFETCHNUM 1
+#define PREFETCHNUM 4
 
 // prefetch policy
-#define NEVER           0
-#define ALWAYS          1
-#define TAGGED          2
-#define LEARNED         3
-#define PREFETCHPOLICY  NEVER
+#define NEVER               0
+#define ALWAYS              1
+#define TAGGED              2
+#define LEARNED             3
+#define L1PREFETCHPOLICY    NEVER
+#define L2PREFETCHPOLICY    ALWAYS
 
 // write policy
 #define WRITEBACK       0
@@ -60,7 +64,7 @@
 #define L1SIZETEST 0X8
 #define L1ASSTEST 2
 #define L1LINESIZETEST 4
-#define L2SIZETEST 0x16
+#define L2SIZETEST 0x10
 #define L2ASSTEST 2
 #define L2LINESIZETEST 4 
 

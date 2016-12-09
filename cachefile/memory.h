@@ -16,7 +16,7 @@ class Memory: public Storage {
 
   // Main access process
   void HandleRequest(uint64_t addr, int bytes, int read,
-                     unsigned char *content, int &hit, int &cycle);
+                     unsigned char *content, int &hit, int &cycle, int evicted = NOT_EVICTED);
   void ShowStat();
 
   unsigned char _mem_[MEMSIZE];

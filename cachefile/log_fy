@@ -55,14 +55,14 @@ NOTE:
 
 need to implement:
 --  prefetch stretagy       
-    --  always prefetch                 -- implemented
+    --  always prefetch                 -- implemented      -- GOOD
         after handle the request, prefetch the next number of cache line
     --  tagged prefetch                 -- TBC
     --  learned prefetch (optional)     -- TBC
 --  prefetch evaluation                 
-    --  useful prefetch                 -- implemented
+    --  useful prefetch                 -- implemented      -- GOOD
     --  useless prefetch                -- abandoned
-    --  harmful prefetch                -- implemented
+    --  harmful prefetch                -- implemented      -- GOOD
 
 20:50
 preempted by pku youth
@@ -84,3 +84,21 @@ need to compare the difference between master& stable version
 
 19:45
 started from the previous 
+
+22:30
+still something with warmup number and cycle
+should be fine with prefetch
+
+need to test:
+--  warm up number  --  GOOD
+--  total cycle     --  GOOD
+
+Question:
+--  when prefetch, do not count time, but when evict, count time, what if evict on prefetch?
+    --  solved by: never count time when evict
+--  what happens when prefetch on evicted dirty write?
+    --  solved by: do not prefetch
+
+22:49
+bug detect:
+--  line size       --  GOOD

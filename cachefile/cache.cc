@@ -39,6 +39,9 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
   s = b = -1;
   int linesize = _size/_ass/_setnum;
   config_.line_size = linesize;
+
+  ShowConfig();
+
   while(_setnum != 0)
   {
     s++;
@@ -69,7 +72,7 @@ void Cache::init(int _level, uint64_t _size, int _ass, int _setnum,
 // [out] cycle: total access cycle
 // -- should be good now
 void Cache::HandleRequest(uint64_t addr, int bytes, int read,
-                          unsigned char *content, int &hit, int &cycle) 
+                          unsigned char *content, int &hit, int &cycle, int evicted) 
 {
   // every time handle a request, add timestamp
   #ifdef DEBUG
@@ -90,13 +93,16 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
 
   // total cycle update
   // NOTE: if prefetch, do not need to update this guy
-  if(read != READ_PREFETCH)
+  if(read != READ_PREFETCH && evicted != EVICTED)
   {
     current_addr = addr;
     cycle += latency_.hit_latency + latency_.bus_latency;
     // storage status update
     stats_.access_cycle += latency_.hit_latency + latency_.bus_latency;
     (stats_.access_counter)++;
+    #ifdef DEBUG
+    printf("accessing cache level %d, cycle = %d\n", level, cycle);
+    #endif
   }
 
   // Decide on whether a bypass should take place.
@@ -125,7 +131,7 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
       #endif    
       hit = 1;
 
-      if (PrefetchDecision(read)) 
+      if (PrefetchDecision(read, evicted)) 
       {
         // Fetch the other data via HandleRequest() recursively.
         // To distinguish from the normal requests,
@@ -211,7 +217,7 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     
     // Decide on whether a prefetch should take place.
     // printf(" -----------------------------------  fx\n");
-    if (PrefetchDecision(read)) 
+    if (PrefetchDecision(read, evicted)) 
     {
       // Fetch the other data via HandleRequest() recursively.
       // To distinguish from the normal requests,
@@ -239,6 +245,8 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
 // ---- decide whether bypass ----
 int Cache::BypassDecision(uint64_t addr, int read) 
 {
+  return false;
+  /*
   if(read == READ_PREFETCH)  return false;
   uint64_t vpn = addr >> 38; //assumed that the addr space is 48 bit
   float result = (float)partCtrl[vpn].miss_num / partCtrl[vpn].access_counter;
@@ -246,6 +254,7 @@ int Cache::BypassDecision(uint64_t addr, int read)
     return true;
   else
     return false;
+*/
 }
 
 // -- obsolete
@@ -357,10 +366,12 @@ void Cache::ReplaceAlgorithm(uint64_t addr, int &cycle, int read)
 }
 
 // ---- whether prefetch ----
-int Cache::PrefetchDecision(int read) 
+int Cache::PrefetchDecision(int read, int evicted) 
 {
   // if already prefetching, do not prefetch again
   if(read == READ_PREFETCH) return FALSE;
+  // if evicted dirty write, do not prefetch 
+  if(evicted == EVICTED) return FALSE;
   switch(PrefetchPolicy)
   {
   case ALWAYS:
@@ -404,13 +415,14 @@ void Cache::ShowStat()
 {
   printf("level %d\n", level);
   // printf("access counter: every time we access this level of cache\n");
+  // printf("access cycle: total latency happened in this level of cache\n");
+  printf("access cycle:     %d\n", stats_.access_cycle);
   printf("access counter:   %d\n", stats_.access_counter);
   // printf("hit number: the number we get a cache hit\n");
   printf("hit numnber:      %d\n", stats_.access_counter - stats_.miss_num);
   // printf("miss number: the number we get a cache miss\n");
   printf("miss numnber:     %d\n", stats_.miss_num);
-  // printf("access cycle: total latency happened in this level of cache\n");
-  printf("access cycle:     %d\n", stats_.access_cycle);
+  printf("warm up number:   %d\n", stats_.warmup_num);
   // printf("replace number: number of times that a old line is evicted\n");
   printf("replace number:   %d\n", stats_.replace_num);
   // printf("fetch number: number of times that we fetch from the next level of cache\n");
@@ -421,4 +433,17 @@ void Cache::ShowStat()
   printf("useful prefetch:  %d\n", stats_.useful_prefetch);
   printf("harmful prefetch: %d\n\n", stats_.harmful_prefetch);
   return;
+}
+
+void Cache::ShowConfig()
+{
+  printf("level:          %d\n", level);
+  uint64_t size;
+  int associativity;
+  int set_num; // Number of cache sets
+  int line_size;
+  printf("size:           %lu\n", config_.size);
+  printf("associativity:  %d\n", config_.associativity);
+  printf("set number:     %d\n", config_.set_num);
+  printf("line size:      %d\n\n", config_.line_size);
 }
